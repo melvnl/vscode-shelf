@@ -27,6 +27,23 @@ function wrap<T extends unknown[]>(label: string, fn: (...args: T) => Promise<vo
 
 let currentManager: ShelfManager | undefined;
 let currentProvider: ShelfProvider | undefined;
+let statusBarItem: vscode.StatusBarItem | undefined;
+
+async function updateStatusBar(): Promise<void> {
+  if (!statusBarItem || !currentManager) return;
+  try {
+    const live = await currentManager.listShelves();
+    if (live.length === 0) {
+      statusBarItem.hide();
+      return;
+    }
+    statusBarItem.text = `$(archive) ${live.length} shelf${live.length === 1 ? '' : 'es'}`;
+    statusBarItem.tooltip = `${live.length} shelved change set${live.length === 1 ? '' : 's'} — click to open`;
+    statusBarItem.show();
+  } catch {
+    statusBarItem.hide();
+  }
+}
 
 async function ensureManager(): Promise<ShelfManager> {
   if (currentManager) return currentManager;
@@ -66,10 +83,16 @@ async function doActivate(context: vscode.ExtensionContext): Promise<void> {
 
   const diffProvider = new ShelfDiffProvider(() => currentManager);
 
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
+  statusBarItem.command = 'shelf.focusView';
+  statusBarItem.hide();
+
   context.subscriptions.push(
+    statusBarItem,
     vscode.window.registerTreeDataProvider('shelfView', currentProvider),
     vscode.window.registerTreeDataProvider('shelfViewStandalone', currentProvider),
     vscode.workspace.registerTextDocumentContentProvider(SHELF_DIFF_SCHEME, diffProvider),
+    currentProvider.onDidChangeTreeData(() => void updateStatusBar()),
   );
 
   // Try to resolve the repo in the background (non-blocking).
@@ -83,6 +106,7 @@ async function doActivate(context: vscode.ExtensionContext): Promise<void> {
       currentManager = new ShelfManager(repoRoot);
       currentProvider?.setManager(currentManager);
       currentProvider?.refresh();
+      void updateStatusBar();
 
       // Subscribe to git state so future repo changes refresh the view.
       const api = await getGitAPI();
@@ -338,6 +362,10 @@ async function doActivate(context: vscode.ExtensionContext): Promise<void> {
     }),
 
     vscode.commands.registerCommand('shelf.showLog', () => output.show()),
+
+    vscode.commands.registerCommand('shelf.focusView', async () => {
+      await vscode.commands.executeCommand('shelfView.focus');
+    }),
   );
 }
 

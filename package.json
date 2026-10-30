@@ -118,6 +118,10 @@
       {
         "command": "shelf.openSettings",
         "title": "Shelf: Open Settings"
+      },
+      {
+        "command": "shelf.focusView",
+        "title": "Shelf: Focus Shelf View"
       }
     ],
     "menus": {
