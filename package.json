@@ -111,6 +111,15 @@
         "title": "Shelf: Recover Deleted"
       },
       {
+        "command": "shelf.deletePermanently",
+        "title": "Shelf: Delete Permanently"
+      },
+      {
+        "command": "shelf.clearDeleted",
+        "title": "Shelf: Clear Recently Deleted",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "shelf.refresh",
         "title": "Shelf: Refresh",
         "icon": "$(refresh)"
@@ -192,6 +201,16 @@
         {
           "command": "shelf.recoverDeleted",
           "when": "viewItem == deletedShelf",
+          "group": "shelf@1"
+        },
+        {
+          "command": "shelf.deletePermanently",
+          "when": "viewItem == deletedShelf",
+          "group": "danger@1"
+        },
+        {
+          "command": "shelf.clearDeleted",
+          "when": "viewItem == deletedBucket",
           "group": "shelf@1"
         }
       ]

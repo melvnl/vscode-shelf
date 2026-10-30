@@ -301,6 +301,44 @@ async function doActivate(context: vscode.ExtensionContext): Promise<void> {
     ),
 
     vscode.commands.registerCommand(
+      'shelf.deletePermanently',
+      wrap('Delete Permanently', async (item: ShelfTreeItem) => {
+        if (!item?.shelf) return;
+        const choice = await vscode.window.showWarningMessage(
+          `Permanently delete "${item.shelf.name}"? This cannot be undone.`,
+          { modal: true },
+          'Delete Permanently',
+        );
+        if (choice !== 'Delete Permanently') return;
+        const manager = await ensureManager();
+        await manager.permanentlyDeleteShelf(item.shelf.id);
+        currentProvider?.refresh();
+      }),
+    ),
+
+    vscode.commands.registerCommand(
+      'shelf.clearDeleted',
+      wrap('Clear Recently Deleted', async () => {
+        const manager = await ensureManager();
+        const deleted = await manager.listDeletedShelves();
+        if (deleted.length === 0) {
+          vscode.window.showInformationMessage('Shelf: nothing to clear.');
+          return;
+        }
+        const choice = await vscode.window.showWarningMessage(
+          `Permanently delete all ${deleted.length} shelf${deleted.length === 1 ? '' : 'es'} in Recently Deleted?`,
+          { modal: true },
+          'Clear All',
+        );
+        if (choice !== 'Clear All') return;
+        for (const shelf of deleted) {
+          await manager.permanentlyDeleteShelf(shelf.id);
+        }
+        currentProvider?.refresh();
+      }),
+    ),
+
+    vscode.commands.registerCommand(
       'shelf.showDiff',
       wrap('Show Diff', async (item: ShelfTreeItem) => {
         if (!item?.shelf) return;
