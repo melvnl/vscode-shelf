@@ -266,10 +266,11 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node18 --minify",
     "lint": "eslint src --ext ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "package": "vsce package",
-    "vscode:prepublish": "npm run compile"
+    "vscode:prepublish": "npm run bundle"
   },
   "devDependencies": {
     "@types/diff": "^7.0.2",
@@ -277,6 +278,8 @@
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^4.1.0",
+    "esbuild": "^0.28.2",
     "eslint": "^8.57.0",
     "prettier": "^3.2.0",
     "typescript": "^5.4.0"
