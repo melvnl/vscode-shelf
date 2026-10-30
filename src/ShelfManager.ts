@@ -169,6 +169,20 @@ export class ShelfManager {
     meta.deleted = true;
     meta.deletedAt = new Date().toISOString();
     await writeTextFile(metaUri, JSON.stringify(meta, null, 2));
+
+    await this.purgeOldDeleted();
+  }
+
+  private async purgeOldDeleted(): Promise<void> {
+    const max = vscode.workspace.getConfiguration('shelf').get<number>('maxDeletedShelves', 10);
+    if (max <= 0) return;
+    const deleted = await this.listDeletedShelves();
+    if (deleted.length <= max) return;
+    // listDeletedShelves returns newest first; purge the tail (oldest).
+    const toPurge = deleted.slice(max);
+    for (const shelf of toPurge) {
+      await this.permanentlyDeleteShelf(shelf.id);
+    }
   }
 
   async permanentlyDeleteShelf(id: string): Promise<void> {
