@@ -1,0 +1,256 @@
+{
+  "name": "vscode-shelf",
+  "displayName": "Shelf",
+  "description": "PyCharm-style shelf for VSCode — save named uncommitted changes locally without touching git history.",
+  "version": "0.0.1",
+  "publisher": "melvinfa",
+  "author": {
+    "name": "Melvin Fa"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "shelf",
+    "shelve",
+    "pycharm",
+    "stash",
+    "git",
+    "patch"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "shelfContainer",
+          "title": "Shelf",
+          "icon": "resources/shelf.svg"
+        }
+      ]
+    },
+    "views": {
+      "scm": [
+        {
+          "id": "shelfView",
+          "name": "Shelf",
+          "when": "scmProvider == git"
+        }
+      ],
+      "shelfContainer": [
+        {
+          "id": "shelfViewStandalone",
+          "name": "Shelves"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "shelfView",
+        "contents": "No shelves yet.\n[Shelve Current Changes](command:shelf.shelveChanges)\n[Learn more](https://github.com/melvinfa/vscode-shelf)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "shelf.shelveChanges",
+        "title": "Shelf: Shelve Changes...",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "shelf.shelveSilently",
+        "title": "Shelf: Shelve Silently",
+        "icon": "$(save)"
+      },
+      {
+        "command": "shelf.shelveThisFile",
+        "title": "Shelve This File...",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "shelf.showLog",
+        "title": "Shelf: Show Log"
+      },
+      {
+        "command": "shelf.unshelve",
+        "title": "Shelf: Unshelve"
+      },
+      {
+        "command": "shelf.unshelveAndKeep",
+        "title": "Shelf: Unshelve and Keep"
+      },
+      {
+        "command": "shelf.deleteShelf",
+        "title": "Shelf: Delete"
+      },
+      {
+        "command": "shelf.renameShelf",
+        "title": "Shelf: Rename"
+      },
+      {
+        "command": "shelf.showDiff",
+        "title": "Shelf: Show Diff"
+      },
+      {
+        "command": "shelf.showRawPatch",
+        "title": "Shelf: Show Raw Patch"
+      },
+      {
+        "command": "shelf.openFileDiff",
+        "title": "Shelf: Open File Diff"
+      },
+      {
+        "command": "shelf.recoverDeleted",
+        "title": "Shelf: Recover Deleted"
+      },
+      {
+        "command": "shelf.refresh",
+        "title": "Shelf: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "shelf.openSettings",
+        "title": "Shelf: Open Settings"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "shelf.shelveChanges",
+          "when": "view == shelfView || view == shelfViewStandalone",
+          "group": "navigation@1"
+        },
+        {
+          "command": "shelf.refresh",
+          "when": "view == shelfView || view == shelfViewStandalone",
+          "group": "navigation@2"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "shelf.shelveThisFile",
+          "when": "scmProvider == git",
+          "group": "7_shelf@1"
+        }
+      ],
+      "scm/resourceGroup/context": [
+        {
+          "command": "shelf.shelveChanges",
+          "when": "scmProvider == git",
+          "group": "7_shelf@1"
+        }
+      ],
+      "scm/sourceControl": [
+        {
+          "command": "shelf.shelveChanges",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "shelf.unshelve",
+          "when": "viewItem == shelf",
+          "group": "shelf@1"
+        },
+        {
+          "command": "shelf.unshelveAndKeep",
+          "when": "viewItem == shelf",
+          "group": "shelf@2"
+        },
+        {
+          "command": "shelf.renameShelf",
+          "when": "viewItem == shelf",
+          "group": "shelf@3"
+        },
+        {
+          "command": "shelf.showDiff",
+          "when": "viewItem == shelf",
+          "group": "shelf@4"
+        },
+        {
+          "command": "shelf.showRawPatch",
+          "when": "viewItem == shelf",
+          "group": "shelf@5"
+        },
+        {
+          "command": "shelf.deleteShelf",
+          "when": "viewItem == shelf",
+          "group": "danger@1"
+        },
+        {
+          "command": "shelf.recoverDeleted",
+          "when": "viewItem == deletedShelf",
+          "group": "shelf@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Shelf",
+      "properties": {
+        "shelf.storageLocation": {
+          "type": "string",
+          "enum": [
+            "workspace",
+            "global"
+          ],
+          "default": "workspace",
+          "description": "Where shelves are stored. 'workspace' uses .vscode/shelves/ in the project; 'global' uses VSCode global storage."
+        },
+        "shelf.revertAfterShelve": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clean the working tree after shelving (matches PyCharm default)."
+        },
+        "shelf.showInSourceControlPanel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Shelf view inside the Source Control panel."
+        },
+        "shelf.maxDeletedShelves": {
+          "type": "number",
+          "default": 10,
+          "description": "Number of soft-deleted shelves to keep before purging."
+        },
+        "shelf.confirmBeforeDelete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before deleting a shelf."
+        },
+        "shelf.autoLocalIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically add .vscode/shelves/ to the repo's local .git/info/exclude so shelves don't appear as untracked changes. This file is NOT committed."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "diff": "^9.0.0"
+  }
+}
