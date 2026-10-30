@@ -10,6 +10,7 @@ export interface PatchResult {
 export interface UntrackedSnapshot {
   path: string;
   content: string;
+  encoding?: 'utf8' | 'base64';
 }
 
 export class PatchConflictError extends Error {
@@ -45,10 +46,7 @@ export class PatchEngine {
     }
 
     const untrackedSnapshots = await Promise.all(
-      untracked.map(async (f) => ({
-        path: f.path,
-        content: await this.readFileContent(f.path),
-      })),
+      untracked.map((f) => this.snapshotUntracked(f.path)),
     );
 
     return { patch, untrackedSnapshots };
@@ -82,8 +80,8 @@ export class PatchEngine {
       const uri = vscode.Uri.joinPath(this.repoRoot, snap.path);
       try {
         const bytes = await vscode.workspace.fs.readFile(uri);
-        const current = Buffer.from(bytes).toString('utf8');
-        if (current !== snap.content) {
+        const expected = snapshotToBuffer(snap);
+        if (!bufferEquals(bytes, expected)) {
           conflicts.push(snap.path);
         }
       } catch {
@@ -120,19 +118,45 @@ export class PatchEngine {
       const uri = vscode.Uri.joinPath(this.repoRoot, snap.path);
       const parent = vscode.Uri.joinPath(uri, '..');
       await vscode.workspace.fs.createDirectory(parent);
-      await vscode.workspace.fs.writeFile(uri, Buffer.from(snap.content, 'utf8'));
+      await vscode.workspace.fs.writeFile(uri, snapshotToBuffer(snap));
     }
   }
 
-  private async readFileContent(relPath: string): Promise<string> {
+  async snapshotUntracked(relPath: string): Promise<UntrackedSnapshot> {
     const uri = vscode.Uri.joinPath(this.repoRoot, relPath);
     try {
       const bytes = await vscode.workspace.fs.readFile(uri);
-      return Buffer.from(bytes).toString('utf8');
+      if (isBinary(bytes)) {
+        return { path: relPath, content: Buffer.from(bytes).toString('base64'), encoding: 'base64' };
+      }
+      return { path: relPath, content: Buffer.from(bytes).toString('utf8'), encoding: 'utf8' };
     } catch {
-      return '';
+      return { path: relPath, content: '', encoding: 'utf8' };
     }
   }
+}
+
+function snapshotToBuffer(snap: UntrackedSnapshot): Uint8Array {
+  return snap.encoding === 'base64'
+    ? new Uint8Array(Buffer.from(snap.content, 'base64'))
+    : new Uint8Array(Buffer.from(snap.content, 'utf8'));
+}
+
+function bufferEquals(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function isBinary(bytes: Uint8Array): boolean {
+  // Heuristic: a NUL byte in the first 8KB indicates a binary file (matches git's rule).
+  const limit = Math.min(bytes.length, 8192);
+  for (let i = 0; i < limit; i++) {
+    if (bytes[i] === 0) return true;
+  }
+  return false;
 }
 
 function extractConflictFiles(gitError: string): string[] {

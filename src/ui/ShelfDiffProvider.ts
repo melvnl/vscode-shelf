@@ -40,7 +40,12 @@ export class ShelfDiffProvider implements vscode.TextDocumentContentProvider {
     // variant === 'after'
     if (file.changeType === 'added') {
       const snaps = await manager.readUntrackedSnapshots(shelfId, deleted);
-      return snaps.find((s) => s.path === relPath)?.content ?? '';
+      const snap = snaps.find((s) => s.path === relPath);
+      if (!snap) return '';
+      if (snap.encoding === 'base64') {
+        return `// Binary file (${Math.ceil((snap.content.length * 3) / 4)} bytes) — content not shown.`;
+      }
+      return snap.content;
     }
     if (file.changeType === 'deleted') return '';
 
