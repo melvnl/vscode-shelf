@@ -192,6 +192,14 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "shelf.shelveChanges",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h",
+        "when": "scmProvider == git || editorTextFocus"
+      }
+    ],
     "configuration": {
       "title": "Shelf",
       "properties": {
